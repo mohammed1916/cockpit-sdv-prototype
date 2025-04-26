@@ -2,9 +2,14 @@ import logging
 import azure.functions as func
 import json
 from datetime import datetime
+from azure.eventhub import EventHubProducerClient, EventData
+
+# Replace with your Event Hub connection string and name
+EVENT_HUB_CONN_STR = "Endpoint=sb://<your-namespace>.servicebus.windows.net/;SharedAccessKeyName=<key-name>;SharedAccessKey=<key>"
+EVENT_HUB_NAME = "<your-event-hub-name>"
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info('Received telemetry data request.')
+    logging.info('Sending telemetry data to Event Hub.')
 
     telemetry_data = {
         "timestamp": datetime.utcnow().isoformat(),
@@ -18,4 +23,13 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         }
     }
 
-    return func.HttpResponse(json.dumps(telemetry_data), mimetype="application/json")
+    try:
+        producer = EventHubProducerClient.from_connection_string(conn_str=EVENT_HUB_CONN_STR, eventhub_name=EVENT_HUB_NAME)
+        event_data_batch = producer.create_batch()
+        event_data_batch.add(EventData(json.dumps(telemetry_data)))
+        producer.send_batch(event_data_batch)
+        producer.close()
+        return func.HttpResponse("Telemetry sent to Event Hub.", status_code=200)
+    except Exception as e:
+        logging.error(f"Error sending telemetry: {e}")
+        return func.HttpResponse("Failed to send telemetry.", status_code=500)
