@@ -1,0 +1,29 @@
+                +------------------------+
+                |   Android Cockpit App  |
+                |------------------------|
+                | - UI: Speed, Battery   |
+                | - Auth: OAuth2         |
+                | - Connects to Azure    |
+                +-----------|------------+
+                            |
+                 WebSocket / REST API
+                            |
+                +-----------v------------+
+                |  Azure Backend (Cloud) |
+                |------------------------|
+                | - Azure Functions      |
+                | - Azure IoT Hub        |
+                | - Event Hubs (Telem.)  |
+                | - Cosmos DB (Logs)     |
+                +-----------|------------+
+                            |
+                  Internal Messaging (gRPC)
+                            |
+                +-----------v-----------+
+                | Domain Controller Sim |
+                |-----------------------|
+                | - Dockerized Services |
+                | - Sim Infotainment ECU|
+                | - Sim ADAS ECU        |
+                +-----------------------+
+

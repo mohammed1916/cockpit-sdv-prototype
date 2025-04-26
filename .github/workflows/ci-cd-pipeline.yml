@@ -1,0 +1,52 @@
+# GitHub Actions CI/CD Pipeline
+# File: .github/workflows/ci-cd-pipeline.yml
+
+name: CI-CD-Pipeline
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Install Dependencies
+        run: |
+          cd docker-domain-controller/infotainment-service
+          pip install flask
+
+      - name: Build Docker Image
+        run: |
+          docker build -t infotainment-service ./docker-domain-controller/infotainment-service
+
+      - name: Run Docker Container (Test)
+        run: |
+          docker run -d -p 5000:5000 infotainment-service
+          sleep 10
+          curl http://localhost:5000/telemetry
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy Azure Function (Python)
+        uses: Azure/functions-action@v1
+        with:
+          app-name: cockpit-telemetry
+          package: "./cloud-backend/send_telemetry"
+
+      - name: Notify Success
+        run: echo "Deployment complete to Azure and Docker test successful."
